@@ -3,8 +3,8 @@ require 'webrick'
 server = WEBrick::HTTPServer.new(:Port => 3000)
 
 server.mount_proc("/") do |request, response|
-  query_string = request.query_string
-  p query_string
+  p "QUERY STRING: #{request.query_string}"
+  p "BODY: #{request.body}"
   response.content_type = "text/text"
   response.body = request.path
 end

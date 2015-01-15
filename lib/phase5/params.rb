@@ -12,8 +12,9 @@ module Phase5
     def initialize(req, route_params = {})
         @req = req
         @params = route_params
-        query_str = @req.query_string
-        parse_www_encoded_form(query_str) unless query_str.nil?
+        p @params
+        parse_www_encoded_form(@req.query_string) unless @req.query_string.nil?
+        parse_www_encoded_form(@req.body) unless @req.body.nil?
     end
 
     def [](key)
@@ -35,47 +36,44 @@ module Phase5
     def parse_www_encoded_form(www_encoded_form)
         parsed_url = URI.decode_www_form(www_encoded_form)
         parsed_url.each do |(key, value)|
-            nested_keys = key.scan(/\w+/).flatten
+            key_array = parse_key(key)
+            parametarize(key_array, value)
+        end
+    end
 
-            if nested_keys.length == 1
-                @params[key] = value
+    def parametarize(key_array, value)
+        current_node = @params
+        key_array.each_with_index do |key, idx|
+            if idx == key_array.length - 1
+                current_node[key] = value
             else
-                p nested_keys
-                key = nested_keys.shift
-                p key
-                p nested_keys
-                nested_value = generate_nested_hash(nested_keys + value)
-                @params[key] = nested_value
+                current_node[key] ||= {}
+                current_node = current_node[key]
             end
         end
     end
-    # def parse_www_encoded_form(www_encoded_form)
-    #     parsed_url = URI.decode_www_form(@req.query_string)
-    #     parsed_url.each do |key, value|
-    #         nested_keys = key.scan(/\w+/).flatten
-    #         if nested_keys.length == 1
-    #             @params[key] = value
-    #         else
-    #             key = nested_keys.shift
-    #             nested_value = generate_nested_hash(nested_keys + value)
-    #             @params[key] = nested_value
-    #         end
-    #     end
 
-    # end
-
-    def generate_nested_hash(nested_keys)
-        inner_hash = { nested_keys[-2] => nested_keys[-1] }
-        return inner_hash if nested_keys.size == 2
-        i = nested_keys.length - 3
-        result = {}
-        while i >= 0
-            result = { nested_keys[i] => inner_hash }
-            inner_hash = result
-            i -= 1
-        end
-        result
+    # this should return an array
+    # user[address][street] should return ['user', 'address', 'street']
+    def parse_key(key)
+        key.split(/\]\[|\[|\]/).flatten
     end
+
+    #previous attempt at solution
+
+    # def generate_nested_hash(nested_keys)
+    #     inner_hash = { nested_keys[-2] => nested_keys[-1] }
+    #     return inner_hash if nested_keys.size == 2
+    #     i = nested_keys.length - 3
+    #     result = {}
+    #     while i >= 0
+    #         result = { nested_keys[i] => inner_hash }
+    #         inner_hash = result
+    #         i -= 1
+    #     end
+    #     p result
+    #     result
+    # end
 
     # def read_query_string
     #   regex = /[\?&](([\w]+)=([\w]+))*/
@@ -85,10 +83,5 @@ module Phase5
     #     @params[key] = value
     #   end
     # end
-
-    # this should return an array
-    # user[address][street] should return ['user', 'address', 'street']
-    def parse_key(key)
-    end
   end
 end

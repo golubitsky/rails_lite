@@ -8,9 +8,8 @@ module Phase5
 
     # setup the controller
     def initialize(req, res, route_params = {})
-      super
-      @route_params = route_params
-      @params = Phase5::Params.new(req)
+      super(req, res)
+      @params = Phase5::Params.new(req, route_params)
     end
 
 
